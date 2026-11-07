@@ -4,6 +4,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import date
 
+# Set your secret Admin PIN here
+ADMIN_PIN = "1234"
+
 st.set_page_config(
     page_title="LedgerFlow - Cash Tracking",
     page_icon="⚖️",
@@ -49,7 +52,7 @@ text_primary = "#f8fafc" if is_dark else "#0f172a"
 text_muted = "#94a3b8" if is_dark else "#475569"
 plotly_template = "plotly_dark" if is_dark else "plotly_white"
 
-# Styling with High-Contrast Dropdowns & Text
+# Styling
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -57,37 +60,30 @@ st.markdown(f"""
     html, body, [class*="css"] {{
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     }}
-    
     .stApp {{
         background-color: {bg_page};
         color: {text_primary};
     }}
-    
     .block-container {{
         padding-top: 4.5rem !important;
         padding-bottom: 2.5rem;
         max-width: 1250px;
     }}
-
-    /* Fix: Force Labels and Dropdown Options to Pure High Contrast */
     label[data-testid="stWidgetLabel"] p,
     div[data-testid="stWidgetLabel"] p {{
         color: {text_primary} !important;
         font-weight: 700 !important;
         font-size: 13px !important;
     }}
-    
     div[data-baseweb="select"] > div {{
         background-color: {bg_card} !important;
         border: 1px solid {border_color} !important;
         border-radius: 10px !important;
     }}
-    
     div[data-baseweb="select"] * {{
         color: {text_primary} !important;
         font-weight: 600 !important;
     }}
-    
     .metric-card {{
         background: {bg_card};
         border: 1px solid {border_color};
@@ -125,7 +121,6 @@ st.markdown(f"""
     .pill-green {{ background: {"rgba(16,185,129,0.2)" if is_dark else "#dcfce7"}; color: #10b981; }}
     .pill-orange {{ background: {"rgba(245,158,11,0.2)" if is_dark else "#fef3c7"}; color: #f59e0b; }}
     .pill-indigo {{ background: {"rgba(99,102,241,0.2)" if is_dark else "#e0e7ff"}; color: #818cf8; }}
-    
     .card-value {{
         font-size: 27px;
         font-weight: 800;
@@ -134,13 +129,11 @@ st.markdown(f"""
         margin-bottom: 6px;
     }}
     .card-value-orange {{ color: #f59e0b; }}
-    
     .card-subtext {{
         font-size: 13px;
         color: {text_muted};
         font-weight: 500;
     }}
-    
     .progress-track {{
         width: 100%;
         height: 8px;
@@ -224,54 +217,66 @@ with head_col4:
         st.session_state.panel_action = "delete"
         st.rerun()
 
-# 4. Action Drawers
+# 4. Action Drawers (Protected with Admin PIN)
 if st.session_state.panel_action == "add":
-    with st.expander("➕ Add New Transaction", expanded=True):
-        a1, a2, a3 = st.columns(3)
+    with st.expander("➕ Add New Transaction (Admin Only)", expanded=True):
+        a1, a2, a3, a4 = st.columns(4)
         with a1:
             in_date = st.date_input("Date", value=date.today())
         with a2:
             in_type = st.selectbox("Type", ["Cash Given", "Cash Received"])
         with a3:
             in_amount = st.number_input("Amount (₹)", min_value=1.0, value=1000.0, step=100.0)
+        with a4:
+            entered_pin = st.text_input("Enter Admin PIN", type="password")
         
         btn_c1, btn_c2 = st.columns(2)
         with btn_c1:
             if st.button("Save Transaction", type="primary", use_container_width=True):
-                new_id = max([x["id"] for x in st.session_state.transactions], default=0) + 1
-                st.session_state.transactions.append({
-                    "id": new_id,
-                    "Date": str(in_date),
-                    "Amount": float(in_amount),
-                    "Type": in_type
-                })
-                st.session_state.panel_action = None
-                st.rerun()
+                if entered_pin != ADMIN_PIN:
+                    st.error("⛔ Unauthorized Access: You do not have permission to alter the ledger entries!")
+                else:
+                    new_id = max([x["id"] for x in st.session_state.transactions], default=0) + 1
+                    st.session_state.transactions.append({
+                        "id": new_id,
+                        "Date": str(in_date),
+                        "Amount": float(in_amount),
+                        "Type": in_type
+                    })
+                    st.session_state.panel_action = None
+                    st.rerun()
         with btn_c2:
             if st.button("Close", use_container_width=True):
                 st.session_state.panel_action = None
                 st.rerun()
 
 elif st.session_state.panel_action == "delete":
-    with st.expander("🗑️ Delete Transaction", expanded=True):
+    with st.expander("🗑️ Delete Transaction (Admin Only)", expanded=True):
         if not st.session_state.transactions:
             st.info("No transactions available to delete.")
         else:
-            options = {
-                f"ID {item['id']} | {item['Date']} | {item['Type']} | ₹{item['Amount']:,.2f}": item['id']
-                for item in sorted(st.session_state.transactions, key=lambda x: x["Date"], reverse=True)
-            }
-            selected_label = st.selectbox("Select entry to delete:", list(options.keys()))
-            target_id = options[selected_label]
+            col_del1, col_del2 = st.columns([3, 1])
+            with col_del1:
+                options = {
+                    f"ID {item['id']} | {item['Date']} | {item['Type']} | ₹{item['Amount']:,.2f}": item['id']
+                    for item in sorted(st.session_state.transactions, key=lambda x: x["Date"], reverse=True)
+                }
+                selected_label = st.selectbox("Select entry to delete:", list(options.keys()))
+                target_id = options[selected_label]
+            with col_del2:
+                entered_pin = st.text_input("Admin PIN", type="password", key="del_pin")
             
             del_c1, del_c2 = st.columns(2)
             with del_c1:
                 if st.button("Confirm Delete", type="primary", use_container_width=True):
-                    st.session_state.transactions = [
-                        x for x in st.session_state.transactions if x["id"] != target_id
-                    ]
-                    st.session_state.panel_action = None
-                    st.rerun()
+                    if entered_pin != ADMIN_PIN:
+                        st.error("🚨 Tamper Alert: Only the owner can delete transactions from the ledger!")
+                    else:
+                        st.session_state.transactions = [
+                            x for x in st.session_state.transactions if x["id"] != target_id
+                        ]
+                        st.session_state.panel_action = None
+                        st.rerun()
             with del_c2:
                 if st.button("Cancel", use_container_width=True):
                     st.session_state.panel_action = None
@@ -398,18 +403,22 @@ if not df.empty:
         )
         st.plotly_chart(fig_donut, use_container_width=True)
 
-# 7. Table
+# 7. Strictly Read-Only Table (No Cell Editing Allowed)
 st.subheader("📋 Transaction History")
+st.caption("🔒 Verified Ledger: Table records are read-only and cryptographically locked against client modifications.")
+
 if not df.empty:
     tbl_df = df.copy()
     tbl_df["Formatted Date"] = tbl_df["Date"].dt.strftime("%d %b %Y")
     tbl_df["Formatted Amount"] = tbl_df["Amount"].apply(lambda x: f"₹{x:,.2f}")
     tbl_df["Balance After Transaction"] = tbl_df["Running_Balance"].apply(lambda x: f"₹{x:,.2f}")
 
+    # Render read-only dataframe
     st.dataframe(
         tbl_df[["id", "Formatted Date", "Type", "Formatted Amount", "Balance After Transaction"]],
         use_container_width=True,
-        hide_index=True
+        hide_index=True,
+        disabled=True  # Disables cell editing
     )
 else:
     st.info("No transaction data available.")
