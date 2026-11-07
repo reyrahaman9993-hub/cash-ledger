@@ -405,7 +405,7 @@ if not df.empty:
 
 # 7. Strictly Read-Only Table (No Cell Editing Allowed)
 st.subheader("📋 Transaction History")
-st.caption("🔒 Verified Ledger: Table records are read-only and locked against client modifications.")
+st.caption("🔒 Verified Ledger: Table records are read-only.")
 
 if not df.empty:
     tbl_df = df.copy()
