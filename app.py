@@ -44,12 +44,12 @@ if "transactions" not in st.session_state:
 is_dark = (st.session_state.theme_mode == "Dark")
 bg_page = "#0f172a" if is_dark else "#f8fafc"
 bg_card = "#1e293b" if is_dark else "#ffffff"
-border_color = "#334155" if is_dark else "#e2e8f0"
+border_color = "#334155" if is_dark else "#cbd5e1"
 text_primary = "#f8fafc" if is_dark else "#0f172a"
-text_muted = "#94a3b8" if is_dark else "#64748b"
+text_muted = "#94a3b8" if is_dark else "#475569"
 plotly_template = "plotly_dark" if is_dark else "plotly_white"
 
-# CSS with Fixed Spacing
+# Styling with High-Contrast Dropdowns & Text
 st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -63,11 +63,29 @@ st.markdown(f"""
         color: {text_primary};
     }}
     
-    /* Extra top padding prevents clipping */
     .block-container {{
         padding-top: 4.5rem !important;
         padding-bottom: 2.5rem;
         max-width: 1250px;
+    }}
+
+    /* Fix: Force Labels and Dropdown Options to Pure High Contrast */
+    label[data-testid="stWidgetLabel"] p,
+    div[data-testid="stWidgetLabel"] p {{
+        color: {text_primary} !important;
+        font-weight: 700 !important;
+        font-size: 13px !important;
+    }}
+    
+    div[data-baseweb="select"] > div {{
+        background-color: {bg_card} !important;
+        border: 1px solid {border_color} !important;
+        border-radius: 10px !important;
+    }}
+    
+    div[data-baseweb="select"] * {{
+        color: {text_primary} !important;
+        font-weight: 600 !important;
     }}
     
     .metric-card {{
@@ -158,7 +176,7 @@ else:
     total_given = total_received = net_owed = recovery_rate = 0
     given_entries = received_entries = []
 
-# 3. Header Bar with Proper Vertical Alignment
+# 3. Header Bar
 head_col1, head_col2, head_col3, head_col4 = st.columns([5, 2, 2, 2], vertical_alignment="center")
 
 with head_col1:
