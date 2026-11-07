@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 from datetime import date
 
 # Set your secret Admin PIN here
-ADMIN_PIN = "1234"
+ADMIN_PIN = "3010"
 
 st.set_page_config(
     page_title="LedgerFlow - Cash Tracking",
@@ -405,7 +405,7 @@ if not df.empty:
 
 # 7. Strictly Read-Only Table (No Cell Editing Allowed)
 st.subheader("📋 Transaction History")
-st.caption("🔒 Verified Ledger: Table records are read-only and cryptographically locked against client modifications.")
+st.caption("🔒 Verified Ledger: Table records are read-only and locked against client modifications.")
 
 if not df.empty:
     tbl_df = df.copy()
@@ -413,12 +413,14 @@ if not df.empty:
     tbl_df["Formatted Amount"] = tbl_df["Amount"].apply(lambda x: f"₹{x:,.2f}")
     tbl_df["Balance After Transaction"] = tbl_df["Running_Balance"].apply(lambda x: f"₹{x:,.2f}")
 
-    # Render read-only dataframe
+    # Standard st.dataframe is read-only by default
     st.dataframe(
         tbl_df[["id", "Formatted Date", "Type", "Formatted Amount", "Balance After Transaction"]],
         use_container_width=True,
-        hide_index=True,
-        disabled=True  # Disables cell editing
+        hide_index=True
+    )
+else:
+    st.info("No transaction data available.")
     )
 else:
     st.info("No transaction data available.")
