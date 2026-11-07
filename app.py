@@ -413,14 +413,10 @@ if not df.empty:
     tbl_df["Formatted Amount"] = tbl_df["Amount"].apply(lambda x: f"₹{x:,.2f}")
     tbl_df["Balance After Transaction"] = tbl_df["Running_Balance"].apply(lambda x: f"₹{x:,.2f}")
 
-    # Standard st.dataframe is read-only by default
     st.dataframe(
         tbl_df[["id", "Formatted Date", "Type", "Formatted Amount", "Balance After Transaction"]],
         use_container_width=True,
         hide_index=True
-    )
-else:
-    st.info("No transaction data available.")
     )
 else:
     st.info("No transaction data available.")
